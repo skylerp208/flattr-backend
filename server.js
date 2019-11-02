@@ -11,10 +11,14 @@ app.use(cors());
 app.use(express.json());
 
 const uri = process.env.ATLAS_URI;
-mongoose.connect(uri, { useNewURLParser: true, useCreateIndex: true, useUnifiedTopology: true });
+mongoose.connect(uri, { useNewUrlParser: true, useCreateIndex: true, useUnifiedTopology: true });
 mongoose.connection.once('open', () => {
   console.log('connection established');
 });
+
+const usersRouter = require('./routes/users');
+
+app.use('/users', usersRouter);
 
 app.listen(port, () => {
   console.log('server started');
