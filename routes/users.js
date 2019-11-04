@@ -1,19 +1,35 @@
 const router = require('express').Router();
-const User = require('../models/user.model');
+const { User, validate } = require('../models/user.model');
+const auth = require(' ./middleware.js/auth');
+const bcrypt = require('bcrypt');
+
 
 router.route('/').get((req, res) => {
-  User.find()
-    .then(users => res.json(users))
-    .catch(err => res.status(400).json('Error: ' + err));
+  const user = User,findById(req.user._id).select("-password")
+  res.send(user )
 });
 
 router.route('/add').post((req, res) => {
-  const { username } = req.body;
-  const newUser = new User({ username });
+  const { error } = validate(req.body);
+  if (error) return res.status(400).send(error.details[0].message);
 
-  newUser.save()
-    .then(() => res.json('User Added'))
-    .catch(err => res.status(400).json('Error: ' + err));
+  let user = await User.findOne({ usernam: req.body.username });
+  if (user) return res.status(400).send('User already registered')
+
+  user = new User({
+    username: req.body.username,
+    name: req.body.name
+  })
+
+  user.password = await bcrpyt.hash(user.password, 10);
+  await user.save();
+
+  const token = user.generateAuthToken();
+  res.header('x-auth-token', token).send({
+    _id: user.id,
+    name: user.name,
+    username: user.username,
+  });
 });
 
 router.route('/:id').get((req, res) => {
@@ -28,8 +44,8 @@ router.route('/update/:id').patch((req, res) => {
       user.bio = req.body.bio;
       user.additional = req.body.additional;
       user.preferences = req.body.preferences;
-      user.likeIds = [...user.likeIds, req.body.likeId];
-      user.matchIds = [...user.matchIds, req.body.matchId];
+      if (req.body.likeId) user.likeIds = [...user.likeIds, req.body.likeId];
+      if (req.body.matchId) user.matchIds = [...user.matchIds, req.body.matchId];
       user.save()
         .then(() => res.json('User Updated'))
         .catch(err => res.status(400).json('Error: ' + err));
