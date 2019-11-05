@@ -1,15 +1,15 @@
 const router = require('express').Router();
-const { User, validate } = require('../models/user.model');
-const auth = require(' ./middleware.js/auth');
 const bcrypt = require('bcrypt');
+const { User, validate } = require('../models/user.model');
+const auth = require('../middleware/auth');
 
 
-router.route('/').get((req, res) => {
-  const user = User,findById(req.user._id).select("-password")
-  res.send(user )
+router.get('/', auth, async (req, res) => {
+  const user = await User.findById(req.user._id).select('-password');
+  res.send(user);
 });
 
-router.route('/add').post((req, res) => {
+router.post('/add', async (req, res) => {
   const { error } = validate(req.body);
   if (error) return res.status(400).send(error.details[0].message);
 
@@ -18,10 +18,11 @@ router.route('/add').post((req, res) => {
 
   user = new User({
     username: req.body.username,
-    name: req.body.name
-  })
+    name: req.body.name,
+    password: req.body.password,
+  });
 
-  user.password = await bcrpyt.hash(user.password, 10);
+  user.password = await bcrypt.hash(user.password, 10);
   await user.save();
 
   const token = user.generateAuthToken();

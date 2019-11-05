@@ -1,8 +1,14 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const config = require('config');
 
 require('dotenv').config();
+
+if (!config.get('myprivatekey')) {
+  console.error('FATAL ERROR: my private key is not defined');
+  process.exit(1);
+}
 
 const app = express();
 const port = process.env.PORT || 3000;
